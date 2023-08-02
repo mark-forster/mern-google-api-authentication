@@ -9,7 +9,7 @@ function Forgotpassword() {
 const forgotpasswordHandle= (e)=>{
     e.preventDefault();
     try{
-        axios.post('http://localhost:7000/api/send-otp',{ email})
+        axios.post('http://localhost:7000/api/send-mail',{ email})
         .then((res)=>{
             if(res.data.error){
                 toast.error(res.data.error)
@@ -39,7 +39,7 @@ const forgotpasswordHandle= (e)=>{
             setemail(e.target.value)
            }}/>
           </div>
-          <button type='submit' className='btn btn-primary w-100'>Send Otp</button>
+          <button type='submit' className='btn btn-primary w-100'>Send</button>
            <Link to='/signin'>login</Link>
         </form>
     </div>

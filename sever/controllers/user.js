@@ -1,6 +1,6 @@
 require('dotenv').config();
 const User= require('../models/user');
-const bcrypt= require('bcrypt');
+const bcryptjs= require('bcryptjs');
 const jwt= require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 const { google } = require("googleapis");
@@ -41,7 +41,7 @@ const register= async (req,res,next)=>{
 
         const output = `
         <h2>Please click on below link to activate your account</h2>
-        <p>${CLIENT_URL}/auth/activate/${token}</p>
+        <p>${CLIENT_URL}/api/activate/${token}</p>
         <p><b>NOTE: </b> The above activation link expires in 30 minutes.</p>
         `;
 
@@ -82,6 +82,46 @@ const register= async (req,res,next)=>{
 }
 
 
+const activateHandle= async (req,res)=>{
+    try{
+        const token= req.params.token;
+                if(token){
+                    
+             const jwtToken=jwt.verify(token,JWT_KEY, (err, decodedToken) => {
+                if(err){
+                     
+                     return res.json({error: "Token not valid"});
+                }
+                return decodedToken;
+                });
+                
+                const user= await User.findOne({email:jwtToken.email});
+                if(user){
+                   return res.json({error: "User already registered by this email"})
+                } //end if user
+               
+                    const newUser=  new User({
+                        name:jwtToken.name,
+                         email: jwtToken.email,
+                         password: bcryptjs.hashSync(jwtToken.password,10)
+                    });
+                    await newUser.save();
+                    return res.json({success: "Successfully registered"})
+                 
+            }//end if token
+            else{
+                return res.json({error:" Something went wrong"})
+            }
+                
+    }
+
+    catch(err){
+                
+        console.log(err);
+        }
+}
+
+
 const login= async (req, res) => {
         const {email, password} = req.body;
         if(!(email || password)){
@@ -93,7 +133,7 @@ const login= async (req, res) => {
             return res.json({error: "Email is not registered"});
         }
         // check password
-        await bcrypt.compare(password, exitUser.password)
+        await bcryptjs.compare(password, exitUser.password)
         .then(match=>{
             if(!match){
                 return res.json({error: "Password does not match"});
@@ -113,12 +153,13 @@ const sendotp= async (req, res) => {
             if(!user){
                 return res.json({error:"User does not exit"})
             }
-            return res.json({success: "Send otp Successfully"})
+            return res.json({success: "Send link successfully check your email inbox"})
         })
         
 }
 module.exports = {
         register,
         login,
-        sendotp
+        sendotp,
+        activateHandle
 }
